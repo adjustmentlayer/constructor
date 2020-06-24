@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+
+{% block body %}
+
+    
+    {% include 'templates/components.html' %}
+
+
+{% endblock %}
+
+{% block footer %}
+
+    <script>
+
+        let spinner = document.querySelector('.spinner');
+
+        let model = {
+            components: [],
+            templates: []
+        }
+
+        initBindings();
+
+        // Отображение всех компонентов
+        let xhttp = new XMLHttpRequest();
+        xhttp.open("GET", 'Home/getComponents', true);
+        xhttp.onreadystatechange = function() {
+            spinner.style="display:flex";
+            if (this.readyState == 4 && this.status == 200) {
+                let result = this.responseText;
+                let json = JSON.parse(result);
+                
+                model = {...model, components:[...json.components] }
+                
+                spinner.style="display:none";
+            }else {
+                
+            }
+        };
+        xhttp.send();
+
+        
+
+
+
+        
+
+        function initBindings(){
+
+            let select = document.querySelector('#savedTemplates');
+            
+            // Отображение всех шаблонов
+            let xhttp = new XMLHttpRequest();
+            xhttp.open("GET", 'Home/getTemplates', true);
+            xhttp.onreadystatechange = function() {
+                spinner.style="display:flex";
+                if (this.readyState == 4 && this.status == 200) {
+                    let result = this.responseText;
+                    let json = JSON.parse(result);
+                    
+                    model = {...model, templates:[...json.templates] }
+
+                    let html = model.templates.map(function(element){
+                        return `<option value="${element}">${element}</option>`;
+                    });
+                    
+                    
+                    if(model.templates.length == 0){
+                        select.innerHTML = "<option disabled value='disabled'>Шаблонов нет</option>";
+                    }else{
+                        select.innerHTML = "<option value='disabled'>Выберите шаблон</option>"+html.join('');
+                    }
+                    spinner.style="display:none";
+                
+                }else {
+                    
+                }
+            };
+            xhttp.send();
+
+            // Удалить компонент
+            
+            let deleteButtons = document.querySelectorAll('.delete-component');
+            deleteButtons.forEach(item => {
+                item.addEventListener('click', event => {
+                    event.preventDefault();
+
+                    let id = item.getAttribute('id');
+                    const deletedComponent = model.components.filter((element) => {
+                        return element !== id;
+                    });
+                    model = {
+                        ...model,
+                        components: [...deletedComponent]
+                    }
+
+                    
+                    let json_str = "components="+ (JSON.stringify(model.components));
+                    let xhttp = new XMLHttpRequest();
+                    
+                    xhttp.open("POST", 'home/render', true);
+                    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xhttp.send(json_str);
+                    xhttp.onreadystatechange = function() {
+                        spinner.style="display:flex";
+                        if (this.readyState == 4 && this.status == 200) {
+                            spinner.style="display:none";
+                            document.querySelector('main').innerHTML = this.responseText;
+                            initBindings();
+                        }else if(this.status == 404 || this.status == 500){
+
+                        }
+                    };
+                    
+                });
+            });
+
+            // Обновить компонент
+            let updateButtons = document.querySelectorAll('.moveup-component, .movedown-component');
+
+            updateButtons.forEach(item => {
+            item.addEventListener('click', event => {
+                event.preventDefault();
+
+                let id = item.getAttribute('id');
+                let msg = item.getAttribute('data-msg');
+                switch(msg){
+                    case 'up':{
+                        
+
+                        let tempIndex = model.components.indexOf(id);
+                        let tempValue = model.components[tempIndex];
+                        if(tempIndex != 0){
+                            model.components[tempIndex] = model.components[tempIndex-1];
+                            model.components[tempIndex-1] = tempValue;
+                        }
+                        break;
+                        
+                        
+                        
+                    }
+                    case 'down':{
+                        let tempIndex = model.components.indexOf(id);
+                        let tempValue = model.components[tempIndex];
+
+                        if(tempIndex != model.components.length-1){
+                            model.components[tempIndex] = model.components[tempIndex+1];
+                            model.components[tempIndex+1] = tempValue;
+                        }
+                        break;
+                        
+                    }
+                }
+                
+
+
+                let json_str = "components="+ (JSON.stringify(model.components));
+
+                
+                let xhttp = new XMLHttpRequest();
+                xhttp.open("POST", 'home/render', true);
+                xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhttp.send(json_str);
+                xhttp.onreadystatechange = function() {
+                    spinner.style="display:flex";
+                    if (this.readyState == 4 && this.status == 200) {
+                        
+                        document.querySelector('main').innerHTML = this.responseText;
+                        initBindings();
+                        spinner.style="display:none";
+                    }else if(this.status == 404 || this.status == 500){
+
+                    }
+                };
+            });
+        }, false);
+
+        // Сохранить шаблон
+        let saveButton = document.querySelectorAll('.save-template');
+
+        saveButton.forEach(item => {
+        item.addEventListener('click', event => {
+
+            event.preventDefault();
+            var str_json = "components=" + (JSON.stringify(model.components));
+
+
+
+            let xhttp = new XMLHttpRequest();
+            xhttp.open("POST", 'home/saveTemplate', true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.send(str_json);
+            xhttp.onreadystatechange = function() {
+                spinner.style="display:flex";
+                if (this.readyState == 4 && this.status == 200) {
+                    
+                    let result = this.responseText;
+                    let json = JSON.parse(result);
+                    
+                    model = {...model, templates:[...json.templates] }
+
+                    let html = model.templates.map(function(element){
+                        return `<option value="${element}">${element}</option>`;
+                    });
+                    if(model.templates.length == 0){
+                        select.innerHTML = "<option disabled value='disabled'>Шаблонов нет</option>";
+                    }else{
+                        select.innerHTML = "<option value='disabled'>Выберите шаблон</option>"+html.join('');
+                    }
+                    
+                    spinner.style="display:none";
+                }else if(this.status == 404 || this.status == 500){
+
+                }
+            };
+            
+        });
+        }, false);
+
+        
+
+        select.addEventListener('change', event => {
+
+            event.preventDefault();
+            var str_json = "template=" + select.value;
+            let xhttp = new XMLHttpRequest();
+            xhttp.open("POST", 'home/openTemplate', true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.send(str_json);
+            xhttp.onreadystatechange = function() {
+                spinner.style="display:flex";
+                if (this.readyState == 4 && this.status == 200) {
+                    
+                    document.querySelector('main').innerHTML = this.responseText;
+                    initBindings();
+                    spinner.style="display:none";
+                }else if(this.status == 404 || this.status == 500){
+
+                }
+            };
+            
+        
+        }, false);
+
+        
+    }
+        
+
+        
+        
+    </script>
+
+    {% endblock %}

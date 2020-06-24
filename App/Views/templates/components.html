@@ -1,0 +1,42 @@
+<div class="fixed z-1031 top-0 left-0 right-0 ">
+    <div class="flex flex-column items-center justify-center relative">
+        <div class="left-0  pointer bg-white ba">
+            <select class="pa3 f5 h-100"  name="" id="savedTemplates">
+                <option disabled value="">Сохранненые шаблоны</option>
+            </select>
+        </div>
+        <div class="left-0  pointer bg-white ba">
+            <a title="Сохранить шаблон" class="pa3 db f5 red save-template">Сохранить</a>
+        </div>
+        
+    </div>
+</div>
+{% for component in components %}
+
+        
+    <div class="relative">
+        <!--controls-->
+        <!--delete btn -->
+        <div class=" absolute right-0 z-1031 pointer bg-white ba">
+            <a id="{{ component }}" title="Удалить блок" class="pa3 db f3 red delete-component"><span class="red mbri-close "></span></a>
+        </div>
+        <div class="absolute top-2">
+            
+            <!--move up btn -->
+            <div class=" absolute left-0 top--2 z-1031 pointer bg-white ba">
+                <a id="{{ component }}" title="Поднять блок" class="pa3 db f3  moveup-component " data-msg="up"><span class="black mbri-up"></span></a>
+            </div>
+            <!--move down btn -->
+            <div class=" absolute left-0 top-2 z-1031 pointer bg-white ba">
+                <a id="{{ component }}" title="Опустить блок" class="pa3 db f3 movedown-component" data-msg="down"><span class="black mbri-down "></span></a>
+            </div>
+        </div>
+        
+
+        {% include 'components/'~ component ~'/index.html' %}
+
+    </div>
+        
+
+    {% endfor %}
+    
